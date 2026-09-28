@@ -1,0 +1,326 @@
+/* ==========================================================================
+   ANIME.PLUS - LIVE WALLPAPER & CUSTOMIZER STYLES (wallpaper.css)
+   ========================================================================== */
+
+/* Fullscreen Background Container */
+#liveWallpaperContainer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -2;
+  overflow: hidden;
+  pointer-events: none;
+  background-color: #0A0A0C;
+  transition: opacity 0.5s ease;
+}
+
+.wallpaper-media-img {
+  position: absolute;
+  top: -5%;
+  left: -5%;
+  width: 110%;
+  height: 110%;
+  object-fit: cover;
+  object-position: center;
+  filter: brightness(0.65) blur(0px);
+  animation: kenBurnsPan 25s ease-in-out infinite alternate;
+  transition: filter 0.3s ease, opacity 0.5s ease;
+}
+
+.wallpaper-media-video {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  min-width: 100%;
+  min-height: 100%;
+  width: auto;
+  height: auto;
+  transform: translate(-50%, -50%);
+  object-fit: cover;
+  filter: brightness(0.65) blur(0px);
+  transition: filter 0.3s ease, opacity 0.5s ease;
+}
+
+.wallpaper-overlay-dim {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at center, rgba(10, 10, 12, 0.4) 0%, rgba(10, 10, 12, 0.85) 100%);
+  z-index: 1;
+}
+
+#wallpaperParticlesCanvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  pointer-events: none;
+}
+
+@keyframes kenBurnsPan {
+  0% { transform: scale(1) translate(0, 0); }
+  50% { transform: scale(1.08) translate(-1.5%, -1%); }
+  100% { transform: scale(1.04) translate(1%, 1.5%); }
+}
+
+/* ==========================================================================
+   LIVE WALLPAPER CUSTOMIZER MODAL
+   ========================================================================== */
+
+.wallpaper-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.wallpaper-modal-backdrop.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.wallpaper-modal-box {
+  width: 92%;
+  max-width: 720px;
+  background: #141519;
+  border: 1px solid var(--cr-border);
+  border-radius: var(--border-radius-lg);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.85), 0 0 30px rgba(255, 100, 10, 0.2);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+}
+
+.wallpaper-modal-header {
+  padding: 1.25rem 1.5rem;
+  background: #0A0A0C;
+  border-bottom: 1px solid var(--cr-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.wallpaper-modal-header h3 {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.wallpaper-modal-header h3 span {
+  color: var(--cr-orange);
+}
+
+.wallpaper-modal-close {
+  background: none;
+  border: none;
+  color: var(--cr-text-secondary);
+  font-size: 1.5rem;
+  cursor: pointer;
+  line-height: 1;
+  transition: color 0.2s ease;
+}
+
+.wallpaper-modal-close:hover {
+  color: #FFFFFF;
+}
+
+.wallpaper-modal-body {
+  padding: 1.5rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Paste URL Input Group */
+.wallpaper-input-section {
+  background: #0A0A0C;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--border-radius-md);
+  padding: 1.25rem;
+}
+
+.wallpaper-input-label {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.wallpaper-url-box {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.wallpaper-url-input {
+  flex: 1;
+  background: #141519;
+  border: 1px solid var(--cr-border);
+  border-radius: var(--border-radius-sm);
+  padding: 0.75rem 1rem;
+  color: #FFFFFF;
+  font-size: 0.9375rem;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.wallpaper-url-input:focus {
+  border-color: var(--cr-orange);
+  box-shadow: 0 0 12px var(--cr-orange-glow);
+}
+
+.wallpaper-apply-btn {
+  background: linear-gradient(135deg, #FF640A 0%, #FF2A54 100%);
+  color: #FFFFFF;
+  font-weight: 700;
+  border: none;
+  border-radius: var(--border-radius-sm);
+  padding: 0.75rem 1.25rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.wallpaper-apply-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(255, 100, 10, 0.4);
+}
+
+/* Preset Wallpapers Selector */
+.wallpaper-presets-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 0.85rem;
+}
+
+.wallpaper-preset-card {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--border-radius-sm);
+  overflow: hidden;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.wallpaper-preset-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.wallpaper-preset-card span {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  padding: 4px 6px;
+  background: rgba(10, 10, 12, 0.85);
+  color: #FFFFFF;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wallpaper-preset-card:hover, .wallpaper-preset-card.active {
+  border-color: var(--cr-orange);
+  transform: scale(1.04);
+  box-shadow: 0 0 12px var(--cr-orange-glow);
+}
+
+/* Wallpaper Adjust Sliders */
+.wallpaper-controls-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.wallpaper-control-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.wallpaper-control-item label {
+  font-size: 0.8125rem;
+  color: var(--cr-text-secondary);
+  font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+}
+
+.wallpaper-slider {
+  width: 100%;
+  accent-color: var(--cr-orange);
+  cursor: pointer;
+}
+
+.wallpaper-toggle-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--cr-border);
+  color: var(--cr-text-secondary);
+  padding: 0.6rem 1rem;
+  border-radius: var(--border-radius-sm);
+  font-weight: 700;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.wallpaper-toggle-btn.active {
+  background: rgba(255, 100, 10, 0.2);
+  border-color: var(--cr-orange);
+  color: var(--cr-orange);
+}
+
+/* Nav Live Wallpaper Button */
+.btn-live-wallpaper-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: var(--border-radius-pill);
+  background: rgba(255, 100, 10, 0.12);
+  border: 1px solid rgba(255, 100, 10, 0.3);
+  color: var(--cr-orange);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-live-wallpaper-nav:hover {
+  background: var(--cr-orange);
+  color: #FFFFFF;
+  border-color: var(--cr-orange);
+  box-shadow: 0 0 15px rgba(255, 100, 10, 0.4);
+}

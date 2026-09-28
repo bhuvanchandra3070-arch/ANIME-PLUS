@@ -1,0 +1,287 @@
+/* ==========================================================================
+   SPOTLIGHT HERO CAROUSEL (hero.css)
+   ========================================================================== */
+
+.hero-spotlight {
+  position: relative;
+  width: 100%;
+  height: 82vh;
+  min-height: 580px;
+  max-height: 760px;
+  background-color: var(--cr-bg-black);
+  overflow: hidden;
+  margin-bottom: 3rem;
+}
+
+.hero-slider-track {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.hero-slide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1;
+}
+
+.hero-slide.active {
+  opacity: 1;
+  visibility: visible;
+  z-index: 2;
+}
+
+/* Background Backdrop Image & Gradients */
+.hero-backdrop {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 78%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  filter: brightness(0.95);
+  transform: scale(1.02);
+  transition: transform 6s ease-out;
+}
+
+.hero-slide.active .hero-backdrop {
+  transform: scale(1);
+}
+
+.hero-gradient-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    rgba(10, 10, 12, 0.98) 0%,
+    rgba(10, 10, 12, 0.85) 30%,
+    rgba(10, 10, 12, 0.35) 60%,
+    rgba(10, 10, 12, 0.1) 85%,
+    rgba(10, 10, 12, 0.25) 100%
+  ),
+  linear-gradient(
+    0deg,
+    rgba(10, 10, 12, 0.95) 0%,
+    rgba(10, 10, 12, 0.2) 25%,
+    rgba(10, 10, 12, 0) 50%
+  );
+  z-index: 2;
+}
+
+/* Hero Content Area */
+.hero-content-wrapper {
+  position: relative;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  z-index: 3;
+}
+
+.hero-info {
+  max-width: 540px;
+  padding-top: 1.5rem;
+  padding-bottom: 2.5rem;
+}
+
+.hero-tags {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.hero-title {
+  font-size: 3rem;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+  color: #FFFFFF;
+  margin-bottom: 0.85rem;
+  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.8);
+}
+
+.hero-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+  color: var(--cr-text-secondary);
+  margin-bottom: 1rem;
+}
+
+.hero-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.hero-meta-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background-color: var(--cr-text-muted);
+}
+
+.hero-synopsis {
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: #D1D5DB;
+  margin-bottom: 1.75rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+}
+
+.hero-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+/* Carousel Thumbnail Pager / Progress */
+.hero-thumbnails-bar {
+  position: absolute;
+  bottom: 1.5rem;
+  right: 2rem;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.hero-thumb-btn {
+  width: 68px;
+  height: 40px;
+  border-radius: var(--border-radius-sm);
+  overflow: hidden;
+  position: relative;
+  opacity: 0.45;
+  border: 1.5px solid transparent;
+  transition: all var(--transition-fast);
+  cursor: pointer;
+}
+
+.hero-thumb-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hero-thumb-btn.active {
+  opacity: 1;
+  border-color: var(--cr-orange);
+  transform: scale(1.05);
+  box-shadow: 0 0 12px var(--cr-orange-glow);
+}
+
+.hero-thumb-btn .thumb-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  width: 0%;
+  background-color: var(--cr-orange);
+}
+
+.hero-thumb-btn.active .thumb-progress {
+  animation: heroTimer 6s linear forwards;
+}
+
+@keyframes heroTimer {
+  from { width: 0%; }
+  to { width: 100%; }
+}
+
+/* Carousel Nav Arrows */
+.hero-nav-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: rgba(10, 10, 12, 0.6);
+  backdrop-filter: blur(8px);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  border: 1px solid var(--cr-border);
+  opacity: 0;
+  transition: opacity var(--transition-fast), background-color var(--transition-fast);
+}
+
+.hero-spotlight:hover .hero-nav-arrow {
+  opacity: 1;
+}
+
+.hero-nav-arrow:hover {
+  background-color: var(--cr-orange);
+  border-color: var(--cr-orange);
+}
+
+.hero-arrow-prev {
+  left: 1.5rem;
+}
+
+.hero-arrow-next {
+  right: 1.5rem;
+}
+
+/* Responsive Hero */
+@media (max-width: 1024px) {
+  .hero-spotlight {
+    height: 65vh;
+  }
+  .hero-title {
+    font-size: 2.25rem;
+  }
+  .hero-backdrop {
+    width: 85%;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-spotlight {
+    height: 70vh;
+    min-height: 480px;
+  }
+  .hero-backdrop {
+    width: 100%;
+    opacity: 0.6;
+  }
+  .hero-gradient-overlay {
+    background: linear-gradient(
+      0deg,
+      rgba(10, 10, 12, 1) 0%,
+      rgba(10, 10, 12, 0.85) 50%,
+      rgba(10, 10, 12, 0.4) 100%
+    );
+  }
+  .hero-title {
+    font-size: 1.75rem;
+  }
+  .hero-synopsis {
+    -webkit-line-clamp: 2;
+    font-size: 0.875rem;
+  }
+  .hero-thumbnails-bar {
+    display: none;
+  }
+}

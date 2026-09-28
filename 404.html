@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#FF640A">
+  <title>404 — Lost in the Anime Multiverse | ANIME.PLUS</title>
+
+  <!-- Smart Clean-URL & GitHub Pages Route Auto-Resolver -->
+  <script>
+    (function() {
+      var path = window.location.pathname;
+      var search = window.location.search || "";
+      var hash = window.location.hash || "";
+      
+      var validPages = [
+        "index", "browse", "movies", "trailers", "schedule",
+        "watch", "watchlist", "premium", "profile", "login",
+        "register", "forgot-password", "anime"
+      ];
+      
+      var trimmed = path.replace(/\/+$/, "");
+      var segment = trimmed.substring(trimmed.lastIndexOf("/") + 1).toLowerCase();
+      
+      if (validPages.indexOf(segment) !== -1) {
+        var target = trimmed + ".html" + search + hash;
+        window.location.replace(target);
+      }
+    })();
+  </script>
+
+  <!-- PWA Manifest & Favicon -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="img/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="img/icon-192.png">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- CSS Stylesheets -->
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/navbar.css">
+
+  <style>
+    .notfound-container {
+      min-height: calc(100vh - var(--navbar-height));
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 3rem 1.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .notfound-bg-glow {
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 100, 10, 0.18) 0%, rgba(255, 42, 84, 0.08) 50%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .notfound-code {
+      font-size: clamp(6rem, 15vw, 11rem);
+      font-weight: 900;
+      line-height: 1;
+      background: linear-gradient(135deg, #FF7B25 0%, #FF640A 50%, #FF2A54 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.5rem;
+      letter-spacing: -3px;
+      position: relative;
+      z-index: 1;
+      text-shadow: 0 10px 30px rgba(255, 100, 10, 0.3);
+    }
+    .notfound-title {
+      font-size: clamp(1.5rem, 3.5vw, 2.25rem);
+      font-weight: 800;
+      color: #FFFFFF;
+      margin-bottom: 1rem;
+      position: relative;
+      z-index: 1;
+    }
+    .notfound-desc {
+      color: var(--cr-text-secondary);
+      max-width: 540px;
+      font-size: 1.0625rem;
+      line-height: 1.6;
+      margin-bottom: 2rem;
+      position: relative;
+      z-index: 1;
+    }
+    .notfound-actions {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      position: relative;
+      z-index: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Minimal Header -->
+  <header class="cr-navbar">
+    <div class="container nav-inner">
+      <a href="index.html" class="nav-brand">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+        <div class="brand-text">
+          <span class="brand-anime">ANIME</span><span class="brand-dot">.</span><span class="brand-plus">PLUS</span>
+        </div>
+      </a>
+      <ul class="nav-menu">
+        <li class="nav-item"><a href="index.html" class="nav-link">Home</a></li>
+        <li class="nav-item"><a href="browse.html" class="nav-link">Browse</a></li>
+        <li class="nav-item"><a href="trailers.html" class="nav-link">Trailers</a></li>
+        <li class="nav-item"><a href="movies.html" class="nav-link">Movies</a></li>
+      </ul>
+      <div class="nav-actions">
+        <a href="index.html" class="btn btn-primary btn-sm">Stream Anime</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="notfound-container">
+    <div class="notfound-bg-glow"></div>
+    <div class="notfound-code">404</div>
+    <h1 class="notfound-title">Lost in the Anime Multiverse</h1>
+    <p class="notfound-desc">
+      The episode, movie, or dimension you are looking for doesn't exist or was summoned away.
+      Jump back into our streaming library to continue watching!
+    </p>
+    <div class="notfound-actions">
+      <a href="index.html" class="btn btn-primary btn-lg">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+        Back to Home
+      </a>
+      <a href="browse.html" class="btn btn-secondary btn-lg">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Browse Anime Catalog
+      </a>
+      <a href="trailers.html" class="btn btn-secondary btn-lg">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        Watch Trailers
+      </a>
+    </div>
+  </main>
+
+</body>
+</html>

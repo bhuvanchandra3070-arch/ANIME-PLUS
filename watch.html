@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="referrer" content="no-referrer">
+  <meta name="theme-color" content="#FF640A">
+  <title>Watch Anime Online — ANIME.PLUS Player</title>
+
+  <!-- PWA Manifest & App Icons -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="img/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="img/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ANIME.PLUS">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- CSS Stylesheets -->
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/navbar.css">
+  <link rel="stylesheet" href="css/player.css">
+  <link rel="stylesheet" href="css/cards.css">
+</head>
+<body>
+
+  <!-- ==========================================================================
+       HEADER NAVBAR
+       ========================================================================== -->
+  <header class="cr-navbar">
+    <div class="container nav-inner">
+      <a href="index.html" class="nav-brand">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+        <div class="brand-text">
+          <span class="brand-anime">ANIME</span><span class="brand-dot">.</span><span class="brand-plus">PLUS</span>
+        </div>
+      </a>
+
+      <ul class="nav-menu">
+        <li class="nav-item"><a href="index.html" class="nav-link">Home</a></li>
+        <li class="nav-item"><a href="browse.html" class="nav-link">Browse</a></li>
+        <li class="nav-item"><a href="schedule.html" class="nav-link">Simulcasts</a></li>
+        <li class="nav-item"><a href="trailers.html" class="nav-link">Trailers</a></li>
+        <li class="nav-item"><a href="movies.html" class="nav-link">Movies</a></li>
+        <li class="nav-item"><a href="premium.html" class="nav-link" style="color: var(--cr-gold);">★ Premium</a></li>
+      </ul>
+
+      <div class="nav-search">
+        <div class="search-input-wrapper">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="navSearchInput" placeholder="Search anime, genres..." autocomplete="off">
+        </div>
+        <div class="search-results-dropdown" id="searchResultsDropdown"></div>
+      </div>
+
+      <div class="nav-actions">
+        <button class="btn-install-nav" id="navInstallBtn" title="Install ANIME.PLUS App">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
+          Install App
+        </button>
+
+        <a href="watchlist.html" class="nav-icon-btn" title="Watchlist">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+          <span class="nav-badge-count" style="display: none;">0</span>
+        </a>
+
+        <div class="nav-auth-buttons" id="navAuthButtons">
+          <a href="login.html" class="btn-nav-login">Sign In</a>
+          <a href="register.html" class="btn-nav-register">Register</a>
+        </div>
+
+        <div class="user-menu-wrapper">
+          <button class="user-avatar-btn" id="userAvatarBtn">
+            <img src="https://images.unsplash.com/photo-1578632767115-351597cf2477?w=120&auto=format&fit=crop&q=80" alt="Avatar">
+          </button>
+          <div class="user-dropdown">
+            <div class="user-dropdown-header">
+              <div class="user-dropdown-name" id="dropdownUserName">AnimeFan</div>
+              <div class="user-dropdown-status" id="dropdownUserTier">MEGA FAN VIP</div>
+            </div>
+            <a href="profile.html" class="user-dropdown-link">Profile & Security</a>
+            <a href="watchlist.html" class="user-dropdown-link">My Watchlist</a>
+            <a href="premium.html" class="user-dropdown-link">VIP Membership</a>
+            <a href="login.html" class="user-dropdown-link logout-link">Sign Out</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==========================================================================
+       WATCH PAGE STREAM & EPISODES LAYOUT
+       ========================================================================== -->
+  <main class="container watch-page-layout">
+    <div class="watch-grid">
+
+      <!-- LEFT: CUSTOM VIDEO PLAYER & DETAILS -->
+      <div class="watch-main-column">
+
+        <!-- CRUNCHYROLL VIDEO PLAYER CONTAINER -->
+        <div class="cr-player-container" id="playerContainer">
+          <video id="mainVideoElement" class="cr-video-element" playsinline preload="metadata"></video>
+
+          <!-- Loader Spinner -->
+          <div class="player-loader" id="playerLoader"></div>
+
+          <!-- Splash Center Play/Pause Icon -->
+          <div class="player-center-icon" id="playerCenterIcon"></div>
+
+          <!-- SKIP INTRO BUTTON (85s) -->
+          <button class="skip-intro-btn" id="skipIntroBtn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/></svg>
+            Skip Intro (+85s)
+          </button>
+
+          <!-- AUTOPLAY NEXT EPISODE COUNTDOWN OVERLAY -->
+          <div class="autoplay-overlay" id="autoplayOverlay">
+            <div class="autoplay-countdown-circle">
+              <svg viewBox="0 0 80 80">
+                <circle cx="40" cy="40" r="35" />
+                <circle cx="40" cy="40" r="35" class="circle-progress" id="autoplayCircleProgress" />
+              </svg>
+              <div class="autoplay-number" id="autoplayCountdownNumber">8</div>
+            </div>
+            <h3 style="margin-bottom: 0.5rem;">Up Next: Episode <span id="autoplayNextEpNum">2</span></h3>
+            <p style="color: var(--cr-text-secondary); margin-bottom: 1.5rem;">Autoplay will start in a few seconds...</p>
+            <div style="display: flex; gap: 1rem;">
+              <button class="btn btn-primary" onclick="playNextEpisode()">Play Now</button>
+              <button class="btn btn-secondary" id="cancelAutoplayBtn">Cancel</button>
+            </div>
+          </div>
+
+          <!-- PLAYER CONTROLS OVERLAY -->
+          <div class="player-controls-backdrop" id="playerControls">
+
+            <!-- TIMELINE PROGRESS & TOOLTIP -->
+            <div class="player-timeline-container" id="playerTimelineContainer">
+              <div class="timeline-tooltip" id="timelineTooltip">00:00</div>
+              <div class="player-timeline">
+                <div class="timeline-buffered" id="timelineBuffered"></div>
+                <div class="timeline-played" id="timelinePlayed">
+                  <div class="timeline-scrubber-handle"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- CONTROLS ROW -->
+            <div class="player-controls-row">
+              <div class="controls-left">
+                <!-- Play/Pause -->
+                <button class="control-btn" id="playPauseBtn" title="Play/Pause (Space)">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                </button>
+
+                <!-- Rewind 10s -->
+                <button class="control-btn" id="rewindBtn" title="Rewind 10s (←)">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
+                </button>
+
+                <!-- Forward 10s -->
+                <button class="control-btn" id="forwardBtn" title="Forward 10s (→)">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 5V1l5 5-5 5V7c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6h2c0 4.42-3.58 8-8 8s-8-3.58-8-8 3.58-8 8-8z"/></svg>
+                </button>
+
+                <!-- Volume -->
+                <div class="volume-control-group">
+                  <button class="control-btn" id="volumeBtn" title="Mute (M)">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+                  </button>
+                  <div class="volume-slider-wrapper">
+                    <input type="range" min="0" max="1" step="0.05" value="0.8" class="volume-slider" id="volumeSlider">
+                  </div>
+                </div>
+
+                <!-- Time -->
+                <div class="player-time-display">
+                  <span class="player-time-current" id="playerCurrentTime">00:00</span>
+                  <span> / </span>
+                  <span class="player-time-total" id="playerTotalTime">24:00</span>
+                </div>
+              </div>
+
+              <div class="controls-right">
+                <!-- Settings Popover -->
+                <div class="player-settings-wrapper">
+                  <button class="control-btn" id="playerSettingsBtn" title="Settings">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                  </button>
+                  <div class="player-settings-menu" id="playerSettingsMenu">
+                    <div style="padding: 0.25rem 0.5rem; font-size: 0.6875rem; font-weight: 800; color: var(--cr-orange); text-transform: uppercase;">Playback Quality</div>
+                    <div class="settings-option-item active" data-type="quality" data-value="1080p">1080p Full HD</div>
+                    <div class="settings-option-item" data-type="quality" data-value="720p">720p HD</div>
+                    <div class="settings-option-item" data-type="quality" data-value="480p">480p SD</div>
+                    
+                    <div style="padding: 0.5rem 0.5rem 0.25rem; font-size: 0.6875rem; font-weight: 800; color: var(--cr-orange); text-transform: uppercase;">Audio Track</div>
+                    <div class="settings-option-item active" data-type="audio" data-value="Japanese (Original)">Japanese (Original)</div>
+                    <div class="settings-option-item" data-type="audio" data-value="English Dub">English Dub</div>
+
+                    <div style="padding: 0.5rem 0.5rem 0.25rem; font-size: 0.6875rem; font-weight: 800; color: var(--cr-orange); text-transform: uppercase;">Speed</div>
+                    <div class="settings-option-item" data-type="speed" data-value="0.75">0.75x</div>
+                    <div class="settings-option-item active" data-type="speed" data-value="1">1.0x Normal</div>
+                    <div class="settings-option-item" data-type="speed" data-value="1.25">1.25x</div>
+                    <div class="settings-option-item" data-type="speed" data-value="1.5">1.5x</div>
+                  </div>
+                </div>
+
+                <!-- Fullscreen -->
+                <button class="control-btn" id="fullscreenBtn" title="Fullscreen (F)">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SERIES & EPISODE DETAILS CARD -->
+        <div class="stream-details-card">
+          <div class="stream-title-header">
+            <div>
+              <h1 class="stream-anime-title" id="streamAnimeTitle">Solo Leveling</h1>
+              <h3 class="stream-episode-title" id="streamEpisodeTitle">Episode 1 — I'm Used to It</h3>
+            </div>
+            <div style="text-align: right;">
+              <span class="badge badge-orange" id="streamRating">★ 9.1</span>
+            </div>
+          </div>
+
+          <p id="streamSynopsis" style="color: #D1D5DB; line-height: 1.6; font-size: 0.9375rem;"></p>
+          <div style="margin-top: 0.75rem; font-size: 0.8125rem; color: var(--cr-text-secondary);" id="streamGenres"></div>
+
+          <div class="stream-actions-bar">
+            <button class="btn btn-secondary btn-sm" id="streamTrailerBtn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+              <span>Watch Trailer</span>
+            </button>
+            <button class="btn btn-secondary btn-sm" id="streamWatchlistBtn">
+              <span>+ Add to Watchlist</span>
+            </button>
+            <button class="btn btn-secondary btn-sm" onclick="showToast('Link copied to clipboard!', 'success')">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+              Share
+            </button>
+            <button class="btn btn-secondary btn-sm" onclick="showToast('Episode downloaded for offline viewing!', 'success')">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Download
+            </button>
+          </div>
+        </div>
+
+        <!-- COMMENTS & DISCUSSION SECTION -->
+        <section class="comments-section-container">
+          <div class="section-header">
+            <h3 class="section-title">Episode Discussion & Comments</h3>
+          </div>
+
+          <div class="comment-input-box">
+            <form id="commentSubmitForm">
+              <textarea class="comment-textarea" id="commentInput" placeholder="Join the discussion... (Please mark spoilers)"></textarea>
+              <div class="comment-input-actions">
+                <label class="spoiler-checkbox-label">
+                  <input type="checkbox" id="spoilerCheck">
+                  <span>Contains Spoilers</span>
+                </label>
+                <button type="submit" class="btn btn-primary btn-sm">Post Comment</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="comments-feed" id="commentsFeed">
+            <!-- Rendered by player.js -->
+          </div>
+        </section>
+
+      </div>
+
+      <!-- RIGHT: EPISODES PLAYLIST SIDEBAR -->
+      <aside class="episodes-sidebar-card">
+        <div class="episodes-header">
+          <h4 style="font-weight: 800; font-size: 1rem;">Episodes</h4>
+          <select class="season-select-dropdown" id="seasonSelectDropdown">
+            <!-- Dynamic -->
+          </select>
+        </div>
+        <div class="episode-items-list" id="episodesListContainer">
+          <!-- Injected by player.js -->
+        </div>
+      </aside>
+
+    </div>
+  </main>
+
+  <!-- Mobile Bottom Nav -->
+  <nav class="mobile-bottom-nav">
+    <a href="index.html" class="mobile-nav-tab">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+      <span>Home</span>
+    </a>
+    <a href="browse.html" class="mobile-nav-tab">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <span>Browse</span>
+    </a>
+    <a href="schedule.html" class="mobile-nav-tab">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <span>Schedule</span>
+    </a>
+    <a href="watchlist.html" class="mobile-nav-tab">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+      <span>My Lists</span>
+    </a>
+    <a href="profile.html" class="mobile-nav-tab">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span>Profile</span>
+    </a>
+  </nav>
+
+  <!-- Scripts -->
+  <script src="js/anime-data.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/player.js"></script>
+</body>
+</html>

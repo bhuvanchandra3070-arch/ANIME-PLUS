@@ -1,0 +1,13 @@
+{
+  "appId": "com.animeplus.stream",
+  "appName": "ANIME.PLUS",
+  "webDir": ".",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "backgroundColor": "#0A0A0C",
+    "allowMixedContent": true
+  }
+}

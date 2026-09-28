@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#181920" />
+      <stop offset="100%" stop-color="#0A0A0C" />
+    </linearGradient>
+    <linearGradient id="brandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF7B25" />
+      <stop offset="50%" stop-color="#FF640A" />
+      <stop offset="100%" stop-color="#FF2A54" />
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="16" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+    <radialGradient id="halo" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FF640A" stop-opacity="0.35" />
+      <stop offset="100%" stop-color="#FF640A" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)" />
+  <rect width="504" height="504" x="4" y="4" rx="108" fill="none" stroke="url(#brandGrad)" stroke-width="6" opacity="0.6" />
+  <circle cx="256" cy="256" r="200" fill="url(#halo)" />
+
+  <!-- Outer Ring Accent -->
+  <circle cx="256" cy="256" r="170" fill="none" stroke="url(#brandGrad)" stroke-width="12" stroke-linecap="round" stroke-dasharray="800 280" filter="url(#glow)" />
+
+  <!-- Play Symbol & Plus Accents -->
+  <g transform="translate(18, 0)">
+    <!-- Play Triangle -->
+    <path d="M 200,165 L 340,256 L 200,347 Z" fill="url(#brandGrad)" filter="url(#glow)" />
+    <!-- Center Cutout / Sparkle -->
+    <path d="M 200,165 L 255,256 L 200,347 Z" fill="#FFFFFF" opacity="0.22" />
+  </g>
+
+  <!-- Plus (+) Accent Badge -->
+  <g transform="translate(350, 150)">
+    <circle cx="0" cy="0" r="38" fill="#FF2A54" filter="url(#glow)" />
+    <path d="M -16,0 L 16,0 M 0,-16 L 0,16" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" />
+  </g>
+</svg>

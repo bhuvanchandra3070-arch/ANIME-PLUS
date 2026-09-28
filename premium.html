@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="referrer" content="no-referrer">
+  <meta name="theme-color" content="#FF640A">
+  <title>ANIME.PLUS Premium — Ad-Free Anime & Simulcasts</title>
+
+  <!-- PWA Manifest & App Icons -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="img/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="img/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ANIME.PLUS">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- CSS Stylesheets -->
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/navbar.css">
+  <link rel="stylesheet" href="css/auth.css">
+</head>
+<body>
+
+  <!-- Navbar -->
+  <header class="cr-navbar">
+    <div class="container nav-inner">
+      <a href="index.html" class="nav-brand">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+        <div class="brand-text">
+          <span class="brand-anime">ANIME</span><span class="brand-dot">.</span><span class="brand-plus">PLUS</span>
+        </div>
+      </a>
+
+      <ul class="nav-menu">
+        <li class="nav-item"><a href="index.html" class="nav-link">Home</a></li>
+        <li class="nav-item"><a href="browse.html" class="nav-link">Browse</a></li>
+        <li class="nav-item"><a href="schedule.html" class="nav-link">Simulcasts</a></li>
+        <li class="nav-item"><a href="trailers.html" class="nav-link">Trailers</a></li>
+        <li class="nav-item"><a href="movies.html" class="nav-link">Movies</a></li>
+        <li class="nav-item"><a href="premium.html" class="nav-link active" style="color: var(--cr-gold);">★ Premium</a></li>
+      </ul>
+
+      <div class="nav-actions" style="margin-left: auto;">
+        <button class="btn-install-nav" id="navInstallBtn" title="Install ANIME.PLUS App">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
+          Install App
+        </button>
+
+        <a href="watchlist.html" class="nav-icon-btn" title="Watchlist">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+          <span class="nav-badge-count" style="display: none;">0</span>
+        </a>
+
+        <div class="nav-auth-buttons" id="navAuthButtons">
+          <a href="login.html" class="btn-nav-login">Sign In</a>
+          <a href="register.html" class="btn-nav-register">Register</a>
+        </div>
+
+        <div class="user-menu-wrapper">
+          <button class="user-avatar-btn" id="userAvatarBtn">
+            <img src="https://images.unsplash.com/photo-1578632767115-351597cf2477?w=120&auto=format&fit=crop&q=80" alt="Avatar">
+          </button>
+          <div class="user-dropdown">
+            <div class="user-dropdown-header">
+              <div class="user-dropdown-name" id="dropdownUserName">AnimeFan</div>
+              <div class="user-dropdown-status" id="dropdownUserTier">MEGA FAN VIP</div>
+            </div>
+            <a href="profile.html" class="user-dropdown-link">Profile & Security</a>
+            <a href="watchlist.html" class="user-dropdown-link">My Watchlist</a>
+            <a href="premium.html" class="user-dropdown-link">VIP Membership</a>
+            <a href="login.html" class="user-dropdown-link logout-link">Sign Out</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Premium Page Content -->
+  <main class="container">
+    <div class="premium-page-header">
+      <span class="badge badge-gold" style="margin-bottom: 0.75rem;">ALL PLANS INCLUDE A 14-DAY FREE TRIAL</span>
+      <h1 class="premium-page-title">Supercharge Your Anime Experience with <span>Premium</span></h1>
+      <p style="color: var(--cr-text-secondary); max-width: 600px; margin: 0 auto; font-size: 1.0625rem;">Stream ad-free, get access to brand new simulcast episodes right after Japan broadcast, and download anime for offline playback.</p>
+    </div>
+
+    <!-- TIER PLANS GRID -->
+    <div class="premium-plans-grid">
+
+      <!-- PLAN 1: FAN -->
+      <div class="plan-card">
+        <div class="plan-name">FAN</div>
+        <div class="plan-price">$7.99 <span>/ month</span></div>
+        <ul class="plan-features">
+          <li>
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            No Commercials or Ads
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            Simulcasts 1hr after Japan
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            Stream on 1 device at a time
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            1080p Full HD Resolution
+          </li>
+        </ul>
+        <button class="btn btn-secondary start-trial-btn" data-plan="Fan">Start 14-Day Free Trial</button>
+      </div>
+
+      <!-- PLAN 2: MEGA FAN (FEATURED) -->
+      <div class="plan-card featured">
+        <div class="plan-name">MEGA FAN</div>
+        <div class="plan-price">$9.99 <span>/ month</span></div>
+        <ul class="plan-features">
+          <li>
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            No Commercials or Ads
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            Simulcasts 1hr after Japan
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            Offline Viewing (Download Episodes)
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            Stream on 4 devices concurrently
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            Exclusive Discord VIP Badge
+          </li>
+        </ul>
+        <button class="btn btn-primary start-trial-btn" data-plan="Mega Fan">Start 14-Day Free Trial</button>
+      </div>
+
+      <!-- PLAN 3: ULTIMATE FAN -->
+      <div class="plan-card">
+        <div class="plan-name">ULTIMATE FAN</div>
+        <div class="plan-price">$14.99 <span>/ month</span></div>
+        <ul class="plan-features">
+          <li>
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            Everything in Mega Fan
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            Stream on 6 devices concurrently
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            Annual Member Swag Bag & Merch
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            15% Off Crunchy Store Purchases
+          </li>
+        </ul>
+        <button class="btn btn-secondary start-trial-btn" data-plan="Ultimate Fan">Start 14-Day Free Trial</button>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Scripts -->
+  <script src="js/anime-data.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/auth.js"></script>
+</body>
+</html>

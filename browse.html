@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="referrer" content="no-referrer">
+  <meta name="theme-color" content="#FF640A">
+  <title>Browse Anime Catalog — ANIME.PLUS</title>
+
+  <!-- PWA Manifest & App Icons -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="img/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="img/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ANIME.PLUS">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- CSS Stylesheets -->
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/navbar.css">
+  <link rel="stylesheet" href="css/cards.css">
+  <link rel="stylesheet" href="css/browse.css">
+  <link rel="stylesheet" href="css/wallpaper.css">
+</head>
+<body>
+
+  <!-- Navbar -->
+  <header class="cr-navbar">
+    <div class="container nav-inner">
+      <a href="index.html" class="nav-brand">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+        <div class="brand-text">
+          <span class="brand-anime">ANIME</span><span class="brand-dot">.</span><span class="brand-plus">PLUS</span>
+        </div>
+      </a>
+
+      <ul class="nav-menu">
+        <li class="nav-item"><a href="index.html" class="nav-link">Home</a></li>
+        <li class="nav-item"><a href="browse.html" class="nav-link active">Browse</a></li>
+        <li class="nav-item"><a href="schedule.html" class="nav-link">Simulcasts</a></li>
+        <li class="nav-item"><a href="trailers.html" class="nav-link">Trailers</a></li>
+        <li class="nav-item"><a href="movies.html" class="nav-link">Movies</a></li>
+        <li class="nav-item"><a href="premium.html" class="nav-link" style="color: var(--cr-gold);">★ Premium</a></li>
+      </ul>
+
+      <div class="nav-search">
+        <div class="search-input-wrapper">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="navSearchInput" placeholder="Search anime, genres..." autocomplete="off">
+        </div>
+        <div class="search-results-dropdown" id="searchResultsDropdown"></div>
+      </div>
+
+      <div class="nav-actions">
+        <button class="btn-install-nav" id="navInstallBtn" title="Install ANIME.PLUS App">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
+          Install App
+        </button>
+
+        <button class="btn-live-wallpaper-nav" onclick="LiveWallpaperEngine.openModal()" title="Live Wallpaper Customizer">🖼️ Live Wallpaper</button>
+
+        <a href="watchlist.html" class="nav-icon-btn" title="Watchlist">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+          <span class="nav-badge-count" style="display: none;">0</span>
+        </a>
+
+        <div class="nav-auth-buttons" id="navAuthButtons">
+          <a href="login.html" class="btn-nav-login">Sign In</a>
+          <a href="register.html" class="btn-nav-register">Register</a>
+        </div>
+
+        <div class="user-menu-wrapper">
+          <button class="user-avatar-btn" id="userAvatarBtn">
+            <img src="https://images.unsplash.com/photo-1578632767115-351597cf2477?w=120&auto=format&fit=crop&q=80" alt="Avatar">
+          </button>
+          <div class="user-dropdown">
+            <div class="user-dropdown-header">
+              <div class="user-dropdown-name" id="dropdownUserName">AnimeFan</div>
+              <div class="user-dropdown-status" id="dropdownUserTier">MEGA FAN VIP</div>
+            </div>
+            <a href="profile.html" class="user-dropdown-link">Profile & Security</a>
+            <a href="watchlist.html" class="user-dropdown-link">My Watchlist</a>
+            <a href="premium.html" class="user-dropdown-link">VIP Membership</a>
+            <a href="login.html" class="user-dropdown-link logout-link">Sign Out</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Browse Section -->
+  <main class="container">
+    <div class="browse-page-header">
+      <h1 class="browse-title">Anime Library & Catalog</h1>
+      <p class="browse-subtitle">Filter by genre, language, season, and popularity to find your next favorite series.</p>
+    </div>
+
+    <!-- FILTER CONTROLS TOOLBAR -->
+    <section class="filter-toolbar">
+      <div class="filter-row-top">
+        <input type="text" id="browseSearchInput" class="filter-search-input" placeholder="🔍 Search by anime title...">
+        
+        <div class="filter-selects-group">
+          <!-- Audio Filter -->
+          <select id="audioFilterSelect" class="filter-select">
+            <option value="all">Audio: All (Sub & Dub)</option>
+            <option value="sub">Subtitled (Japanese)</option>
+            <option value="dub">English Dubbed</option>
+          </select>
+
+          <!-- Sort Filter -->
+          <select id="sortFilterSelect" class="filter-select">
+            <option value="popular">Sort: Most Popular</option>
+            <option value="rating">Highest Rated</option>
+            <option value="newest">Recently Released</option>
+            <option value="alpha">Alphabetical (A-Z)</option>
+          </select>
+
+          <span id="resultsCountDisplay" style="font-size: 0.8125rem; color: var(--cr-text-secondary); font-weight: 700;">14 Series</span>
+        </div>
+      </div>
+
+      <!-- GENRE CHIPS -->
+      <div class="genre-chips-container">
+        <button class="genre-chip active" data-genre="all">All Genres</button>
+        <button class="genre-chip" data-genre="Action">Action</button>
+        <button class="genre-chip" data-genre="Shonen">Shonen</button>
+        <button class="genre-chip" data-genre="Fantasy">Fantasy</button>
+        <button class="genre-chip" data-genre="Supernatural">Supernatural</button>
+        <button class="genre-chip" data-genre="Adventure">Adventure</button>
+        <button class="genre-chip" data-genre="Comedy">Comedy</button>
+        <button class="genre-chip" data-genre="Romance">Romance</button>
+        <button class="genre-chip" data-genre="Sci-Fi">Sci-Fi</button>
+        <button class="genre-chip" data-genre="Movie">Theatrical Movies</button>
+      </div>
+    </section>
+
+    <!-- ANIME GRID CONTAINER -->
+    <div class="anime-grid" id="browseAnimeGrid">
+      <!-- Injected by browse.js -->
+    </div>
+  </main>
+
+  <!-- Mobile Bottom Nav -->
+  <nav class="mobile-bottom-nav">
+    <a href="index.html" class="mobile-nav-tab">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+      <span>Home</span>
+    </a>
+    <a href="browse.html" class="mobile-nav-tab active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <span>Browse</span>
+    </a>
+    <a href="schedule.html" class="mobile-nav-tab">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <span>Schedule</span>
+    </a>
+    <a href="watchlist.html" class="mobile-nav-tab">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+      <span>My Lists</span>
+    </a>
+    <a href="profile.html" class="mobile-nav-tab">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span>Profile</span>
+    </a>
+  </nav>
+
+  <!-- Scripts -->
+  <script src="js/anime-data.js"></script>
+  <script src="js/anime-3d.js"></script>
+  <script src="js/live-wallpaper.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/browse.js"></script>
+</body>
+</html>

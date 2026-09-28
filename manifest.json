@@ -1,0 +1,66 @@
+{
+  "name": "ANIME.PLUS — Stream Anime & Movies",
+  "short_name": "ANIME.PLUS",
+  "description": "Stream the latest anime simulcasts, blockbuster movies, and official trailers in Full HD.",
+  "id": "anime-plus-web-app",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0A0A0C",
+  "theme_color": "#FF640A",
+  "categories": ["entertainment", "video", "movies"],
+  "lang": "en",
+  "icons": [
+    {
+      "src": "img/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "img/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "img/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "img/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Browse Catalog",
+      "url": "./browse.html",
+      "description": "Browse complete anime catalog and genres"
+    },
+    {
+      "name": "Anime Movies",
+      "url": "./movies.html",
+      "description": "Watch blockbuster anime films in 4K"
+    },
+    {
+      "name": "Official Trailers",
+      "url": "./trailers.html",
+      "description": "Watch anime PVs, teasers and trailers"
+    },
+    {
+      "name": "Release Calendar",
+      "url": "./schedule.html",
+      "description": "View weekly simulcast schedule"
+    },
+    {
+      "name": "My Watchlist",
+      "url": "./watchlist.html",
+      "description": "Access saved anime and watch queue"
+    }
+  ]
+}
