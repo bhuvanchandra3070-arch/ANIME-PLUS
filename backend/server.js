@@ -12,13 +12,24 @@ const PORT = process.env.PORT || 5000;
 // ===============================
 // MIDDLEWARE
 // ===============================
-app.use(cors());
+const allowedOrigins = (process.env.CLIENT_ORIGINS || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(null, false);
+  }
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // ===============================
 // FRONTEND STATIC ASSETS
 // ===============================
+app.use("/backend", (req, res) => res.sendStatus(404));
 app.use(express.static(path.join(__dirname, "..")));
 
 // ===============================
@@ -31,12 +42,10 @@ if (process.env.MONGO_URI && !process.env.MONGO_URI.includes("username:password"
       console.log("✅ MongoDB connected successfully");
     })
     .catch((error) => {
-      console.warn("⚠️ MongoDB connection warning (running with local fallback):", error.message);
-      console.warn("💡 To use MongoDB, ensure MONGO_URI is correctly set in .env");
+      console.warn("⚠️ MongoDB connection failed; account and OTP requests will return unavailable:", error.message);
     });
 } else {
-  console.log("ℹ️ Operating with in-memory / local storage fallback mode.");
-  console.log("💡 Add valid MONGO_URI to .env file to enable cloud persistence");
+  console.warn("⚠️ MONGO_URI is missing; account and OTP requests will return unavailable.");
 }
 
 // ===============================
@@ -88,7 +97,7 @@ HTML_PAGES.forEach((page) => {
   });
 });
 
-app.get("*", (req, res) => {
+app.get("/{*splat}", (req, res) => {
   res.sendFile(path.join(__dirname, "..", "index.html"));
 });
 

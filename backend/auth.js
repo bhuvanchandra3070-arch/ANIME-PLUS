@@ -1,4 +1,7 @@
 const jwt = require("jsonwebtoken");
+const { requiredSecret } = require("./config/secrets");
+
+const JWT_SECRET = requiredSecret("JWT_SECRET");
 
 const protect = (req, res, next) => {
     try {
@@ -15,7 +18,7 @@ const protect = (req, res, next) => {
 
         const decoded = jwt.verify(
             token,
-            process.env.JWT_SECRET || "crunchy_secret_key_change_in_production"
+            JWT_SECRET
         );
 
         req.userId = decoded.userId;

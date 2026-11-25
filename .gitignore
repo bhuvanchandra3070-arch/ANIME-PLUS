@@ -7,6 +7,8 @@ package-lock.json
 .env.local
 backend/.env
 *.pem
+backend/user_registrations_spreadsheet.csv
+user_registrations_spreadsheet.csv
 
 # IDE & Editor files
 .vscode/

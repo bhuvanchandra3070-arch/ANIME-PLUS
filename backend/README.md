@@ -3,7 +3,7 @@
 ## 🚀 Setup & Installation
 
 ### Prerequisites
-- Node.js (v14+)
+- Node.js 18 or newer (required by Express 5)
 - MongoDB Atlas Account (free)
 - npm or yarn
 
@@ -19,9 +19,25 @@ Create a `.env` file in the backend directory:
 ```env
 PORT=5000
 MONGO_URI=mongodb+srv://username:password@your-cluster.mongodb.net/anime-hub?retryWrites=true&w=majority
-JWT_SECRET=your_very_long_random_secret_key_change_this_in_production
+CLIENT_ORIGINS=http://localhost:8000,https://your-site.example
+JWT_SECRET=replace-with-at-least-32-random-characters
+OTP_SECRET=replace-with-a-different-32-character-random-secret
 NODE_ENV=development
+
+# Email OTP (Resend). EMAIL_FROM must use a verified sender/domain.
+RESEND_API_KEY=re_...
+EMAIL_FROM=ANIME.PLUS <no-reply@your-verified-domain.example>
+
+# SMS OTP (Twilio)
+TWILIO_ACCOUNT_SID=AC...
+TWILIO_AUTH_TOKEN=...
+TWILIO_PHONE_NUMBER=+15551234567
+
 ```
+
+Copy `backend/.env.example` to `backend/.env` and replace every example value. Keep `.env` private. Email and SMS codes are sent by the backend; the browser no longer creates or displays demo codes. If a secret or delivery provider is missing, sending a code returns an unavailable message instead of pretending it was sent.
+
+For a separate frontend host such as GitHub Pages, set `window.API_BASE_URL` in `js/api-config.js` to your backend URL ending in `/api`, then add the exact frontend origin to `CLIENT_ORIGINS`. GitHub Pages can host the installable PWA, but it cannot run the authentication server. The OTP request limiter is in memory on one server process; use a shared store before running multiple backend instances.
 
 **🔐 Generate a secure JWT_SECRET:**
 ```bash
@@ -45,6 +61,14 @@ Server runs at: `http://localhost:5000`
 ---
 
 ## 📚 API Endpoints
+
+### Email and phone verification codes
+
+`POST /api/auth/send-otp` accepts `type: "email"` with `email`, or `type: "mobile"` with an E.164 `phone` such as `+919876543210`. Phone verification sends SMS. Set `purpose` to `password_reset` only for the reset flow; normal sign-in uses `login`.
+
+`POST /api/auth/verify-otp` accepts `email` or `phone`, the six-digit `otp`, `type`, and an optional `name`. Codes expire after 10 minutes, are stored as keyed hashes, are single use, and allow at most five incorrect attempts. Request and verification endpoints are rate limited. The current limiter is per server process, so use shared storage before scaling to multiple instances.
+
+The server responds with a generic delivery message so callers cannot use the endpoint to check whether an account exists. Missing database or provider configuration returns an unavailable response; no OTP is generated in the browser or returned by the API.
 
 ### Authentication Endpoints
 
@@ -189,7 +213,9 @@ Response (200):
 ✅ **Refresh Tokens** - Dual-token system for security
 ✅ **Input Validation** - Email format & password requirements
 ✅ **Email Uniqueness** - Prevents duplicate registrations
-✅ **Error Handling** - Detailed error messages
+✅ **OTP Delivery** - Resend email and Twilio SMS providers configured only on the server
+✅ **OTP Storage** - Keyed hash, ten-minute expiry, one-time use, attempt and request limits
+✅ **Secrets** - Startup requires configured JWT and OTP secrets
 ✅ **Protected Routes** - Bearer token middleware
 ✅ **Token Expiration** - 7 days for access, 30 days for refresh
 
@@ -299,14 +325,14 @@ Tokens are stored in localStorage:
 
 ---
 
-## 🎯 Next Steps
+## 🎯 Before Launch
 
-1. **Set up MongoDB Atlas** - Get free 512MB database
-2. **Add email verification** - Send confirmation links
-3. **Implement password reset** - Forgot password flow
-4. **Add social login** - Google, GitHub OAuth
-5. **Rate limiting** - Prevent brute force attacks
-6. **Admin dashboard** - Manage users & content
+1. Set the database, JWT and OTP secrets, and email/SMS provider credentials in the backend host's private environment settings.
+2. Set `CLIENT_ORIGINS` to the exact deployed frontend URL and set `window.API_BASE_URL` in `js/api-config.js` if the API is on another host.
+3. If an older Google Apps Script or spreadsheet logger was deployed, disable it separately; this code no longer sends user details to that service.
+4. Keep provider keys out of the repository and chat messages.
+
+The old `backend/user_registrations_spreadsheet.csv` is still tracked in the repository. GitHub Pages and the Node server changes no longer publish it, but it can still be viewed from the public GitHub source until you decide whether to remove it. If it contains real passwords, change those passwords and remove the exposed records from the repository history.
 
 ---
 

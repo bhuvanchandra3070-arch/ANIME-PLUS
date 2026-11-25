@@ -3,7 +3,7 @@
    Fast caching, offline streaming interface, and resilient asset store
    ========================================================================== */
 
-const CACHE_NAME = "animeplus-pwa-v2";
+const CACHE_NAME = "animeplus-pwa-v3";
 
 const ASSETS_TO_CACHE = [
   "./",
@@ -40,6 +40,7 @@ const ASSETS_TO_CACHE = [
   "./js/schedule.js",
   "./js/watchlist.js",
   "./js/auth.js",
+  "./js/api-config.js",
   "./js/anime-3d.js",
   "./js/live-wallpaper.js"
 ];

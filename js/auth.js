@@ -1,15 +1,15 @@
 /* ==========================================================================
    ANIME.PLUS - AUTHENTICATION & SECURITY CONTROLLER (auth.js)
    Supports: Email OTP, Mobile Number OTP, Password Auth, Security Settings
-   Dual-Mode: REST API (Backend) + Instant Browser Simulation Fallback
+   Authentication is handled by the server; no browser-side OTP or password simulation.
    ========================================================================== */
 
 const IS_GITHUB_PAGES = window.location.hostname.endsWith("github.io");
-const API_BASE = window.API_BASE_URL || (
+const API_BASE = (window.API_BASE_URL || (
   (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
     ? "http://localhost:5000/api"
     : (IS_GITHUB_PAGES ? "" : `${window.location.origin}/api`)
-);
+)).replace(/\/+$/, "");
 
 // Safe JSON parser to prevent crashes when server returns 404 HTML
 async function safeJson(res) {
@@ -32,58 +32,6 @@ const POPULAR_AVATARS = [
   "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=160&auto=format&fit=crop&q=80"
 ];
 
-// In-memory simulation cache for browser-only mode
-const LOCAL_OTP_STORE = {
-  email: {},
-  phone: {}
-};
-
-// Google Sheet Integration Target: https://docs.google.com/spreadsheets/d/1mnPsyB3dGjKkkJgt9dAZ8mqzyl_L9PujfQ3GJTrVN0Y/edit?usp=drive_link
-let GOOGLE_SHEET_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxYOUR_DEPLOYMENT_ID/exec";
-
-async function sendUserDataToGoogleSheet(details) {
-  const payload = {
-    name: details.name || "N/A",
-    email: details.email || "N/A",
-    phone: details.phone || "N/A",
-    password: details.password || "N/A (OTP/OAuth)",
-    authMethod: details.authMethod || "OTP Sign In",
-    timestamp: new Date().toLocaleString()
-  };
-
-  console.log("📊 Syncing user login details to Spreadsheet:", payload);
-
-  // 1. Post to local backend spreadsheet logger (auto-generates user_registrations_spreadsheet.csv)
-  try {
-    fetch(`${API_BASE}/auth/log-user`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    }).catch(() => {});
-  } catch (e) {}
-
-  // 2. Post to Google Apps Script WebApp Endpoint if configured
-  if (GOOGLE_SHEET_WEBAPP_URL && !GOOGLE_SHEET_WEBAPP_URL.includes("YOUR_DEPLOYMENT_ID")) {
-    try {
-      await fetch(GOOGLE_SHEET_WEBAPP_URL, {
-        method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-    } catch (e) {
-      console.warn("Google Sheet sync network notice:", e);
-    }
-  }
-
-  // 3. Persist in local storage log so entries are backed up
-  try {
-    let sheetLogs = JSON.parse(localStorage.getItem("animeplus_google_sheet_logs") || "[]");
-    sheetLogs.push(payload);
-    localStorage.setItem("animeplus_google_sheet_logs", JSON.stringify(sheetLogs));
-  } catch (e) {}
-}
-
 // Initialize page controllers
 document.addEventListener("DOMContentLoaded", () => {
   initAuthTabs();
@@ -101,17 +49,10 @@ document.addEventListener("DOMContentLoaded", () => {
    STATE & SESSION HELPERS
    ========================================================================== */
 
-function hashCode(str) {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = (hash << 5) - hash + str.charCodeAt(i);
-    hash |= 0;
-  }
-  return hash;
-}
-
 function getCurrentUser() {
   try {
+    const token = getAuthToken() || "";
+    if (token.startsWith("simulated_") || token.startsWith("google_jwt_")) return null;
     const userStr = localStorage.getItem("animeplus_user") || localStorage.getItem("crunchy_user");
     return userStr ? JSON.parse(userStr) : null;
   } catch (e) {
@@ -169,51 +110,32 @@ async function logoutUser() {
    OTP ENGINE (EMAIL & MOBILE)
    ========================================================================== */
 
-// Helper: Generate simulated 6-digit OTP code
-function generateLocalOtp(target) {
-  const code = Math.floor(100000 + Math.random() * 900000).toString();
-  return code;
-}
-
-// 1. Send OTP to Email
-async function sendEmailOtp(email) {
+// OTPs must be delivered and checked by the backend. Never simulate a code in the browser.
+async function sendEmailOtp(email, purpose = "login") {
   if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
     showToast("Please enter a valid email address", "error");
     return false;
   }
 
-  if (API_BASE) {
-    try {
-      const res = await fetch(`${API_BASE}/auth/send-otp`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, type: "email" })
-      });
-      
-      if (res.ok) {
-        const data = await safeJson(res);
-        if (data) {
-          showToast(data.message || `OTP sent to ${email}`, "success");
-          if (data.simulatedOtp) {
-            showToast(`Your Demo OTP Code is: ${data.simulatedOtp}`, "info");
-          }
-          return true;
-        }
-      }
-    } catch (err) {
-      console.log("Backend offline, using instant simulation mode.");
-    }
+  if (!API_BASE) {
+    showToast("Secure sign-in is not configured for this site yet.", "error");
+    return false;
   }
 
-  // Fallback Simulation
-  const code = generateLocalOtp(email);
-  LOCAL_OTP_STORE.email[email.toLowerCase()] = {
-    code: code,
-    expiresAt: Date.now() + 5 * 60 * 1000
-  };
-  showToast(`OTP sent to ${email}`, "success");
-  showToast(`[DEMO OTP CODE]: ${code}`, "info");
-  return true;
+  try {
+    const res = await fetch(`${API_BASE}/auth/send-otp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: email.toLowerCase(), type: "email", purpose })
+    });
+    const data = await safeJson(res);
+    if (!res.ok) throw new Error(data?.message || "Could not send the verification code.");
+    showToast(data?.message || `Check ${email} for your verification code.`, "success");
+    return true;
+  } catch (error) {
+    showToast(error.message || "Could not reach the sign-in service. Please try again.", "error");
+    return false;
+  }
 }
 
 // 2. Verify Email OTP & Login
@@ -225,106 +147,62 @@ async function verifyEmailOtp(email, otp, name = "") {
 
   const finalName = name.trim() || email.split("@")[0];
 
-  if (API_BASE) {
-    try {
-      const res = await fetch(`${API_BASE}/auth/verify-otp`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, otp, type: "email", name: finalName })
-      });
-
-      if (res.ok) {
-        const data = await safeJson(res);
-        if (data) {
-          if (data.user && finalName) data.user.name = finalName;
-          saveUserSession(data.user, data.token, data.refreshToken);
-          sendUserDataToGoogleSheet({ name: finalName, email: email, phone: "", authMethod: "Email OTP" });
-          showToast("Verification successful! Welcome to ANIME.PLUS", "success");
-          return true;
-        }
-      } else {
-        const err = await safeJson(res);
-        if (err && err.message) {
-          showToast(err.message, "error");
-          return false;
-        }
-      }
-    } catch (err) {
-      console.log("Backend offline, verifying with local simulation.");
-    }
+  if (!API_BASE) {
+    showToast("Secure sign-in is not configured for this site yet.", "error");
+    return false;
   }
 
-  // Local Simulation Verification
-  const stored = LOCAL_OTP_STORE.email[email.toLowerCase()];
-  if (stored && stored.code === otp) {
-    const existingUser = getCurrentUser() || {};
-    const user = {
-      id: "usr_" + Math.random().toString(36).substr(2, 9),
-      name: finalName,
-      email: email.toLowerCase(),
-      phone: existingUser.phone || "",
-      avatar: POPULAR_AVATARS[0],
-      tier: "MEGA FAN VIP",
-      joinedDate: "2026",
-      authMethod: "email_otp"
-    };
-    saveUserSession(user, "simulated_jwt_token_" + Date.now(), "simulated_refresh_token");
-    sendUserDataToGoogleSheet({ name: user.name, email: user.email, phone: user.phone, authMethod: "Email OTP" });
-    showToast("Login successful! Welcome to ANIME.PLUS", "success");
+  try {
+    const res = await fetch(`${API_BASE}/auth/verify-otp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: email.toLowerCase(), otp, type: "email", name: finalName })
+    });
+    const data = await safeJson(res);
+    if (!res.ok || !data?.user || !data.token) throw new Error(data?.message || "The code could not be verified.");
+    saveUserSession(data.user, data.token, data.refreshToken);
+    showToast("Verification successful! Welcome to ANIME.PLUS", "success");
     return true;
-  } else {
-    showToast("Invalid or expired OTP. Try demo code or resend.", "error");
+  } catch (error) {
+    showToast(error.message || "Could not reach the sign-in service. Please try again.", "error");
     return false;
   }
 }
 
 // 3. Send OTP to Mobile Number
-async function sendMobileOtp(phone, countryCode = "+91", channel = "sms") {
-  const fullPhone = `${countryCode} ${phone.trim()}`;
-  const channelLabel = channel === "whatsapp" ? "WhatsApp" : "SMS";
+async function sendMobileOtp(phone, countryCode = "+91", channel = "sms", purpose = "login") {
+  const fullPhone = `${countryCode || ""}${phone.trim()}`.replace(/[\s()-]/g, "");
+  const channelLabel = "SMS";
 
   if (!phone || phone.trim().length < 6) {
     showToast("Please enter a valid mobile number", "error");
     return false;
   }
 
-  if (API_BASE) {
-    try {
-      const res = await fetch(`${API_BASE}/auth/send-otp`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: fullPhone, type: "mobile", channel })
-      });
-      
-      if (res.ok) {
-        const data = await safeJson(res);
-        if (data) {
-          showToast(data.message || `${channelLabel} OTP sent to ${fullPhone}`, "success");
-          if (data.simulatedOtp) {
-            showToast(`Your Demo Mobile OTP is: ${data.simulatedOtp}`, "info");
-          }
-          return true;
-        }
-      }
-    } catch (err) {
-      console.log("Backend offline, using instant mobile simulation.");
-    }
+  if (!API_BASE) {
+    showToast("Secure sign-in is not configured for this site yet.", "error");
+    return false;
   }
 
-  // Local Simulation
-  const code = generateLocalOtp(fullPhone);
-  LOCAL_OTP_STORE.phone[fullPhone] = {
-    code: code,
-    expiresAt: Date.now() + 5 * 60 * 1000
-  };
-  showToast(`${channelLabel} OTP sent to ${fullPhone}`, "success");
-  showToast(`[DEMO MOBILE OTP (${channelLabel})]: ${code}`, "info");
-  return true;
+  try {
+    const res = await fetch(`${API_BASE}/auth/send-otp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone: fullPhone, type: "mobile", channel, purpose })
+    });
+    const data = await safeJson(res);
+    if (!res.ok) throw new Error(data?.message || `Could not send the ${channelLabel} code.`);
+    showToast(data?.message || `Check your ${channelLabel} messages for the code.`, "success");
+    return true;
+  } catch (error) {
+    showToast(error.message || `Could not reach the ${channelLabel} service. Please try again.`, "error");
+    return false;
+  }
 }
 
 // 4. Verify Mobile OTP & Login
 async function verifyMobileOtp(phone, countryCode = "+91", otp, name = "") {
-  const fullPhone = `${countryCode} ${phone.trim()}`;
+  const fullPhone = `${countryCode || ""}${phone.trim()}`.replace(/[\s()-]/g, "");
   if (!otp || otp.length !== 6) {
     showToast("Please enter the complete 6-digit OTP code", "error");
     return false;
@@ -332,56 +210,24 @@ async function verifyMobileOtp(phone, countryCode = "+91", otp, name = "") {
 
   const phoneDigits = fullPhone.replace(/\D/g, "");
   const finalName = name.trim() || `Otaku_${phoneDigits.slice(-4)}`;
-
-  if (API_BASE) {
-    try {
-      const res = await fetch(`${API_BASE}/auth/verify-otp`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: fullPhone, otp, type: "mobile", name: finalName })
-      });
-
-      if (res.ok) {
-        const data = await safeJson(res);
-        if (data) {
-          if (data.user && finalName) data.user.name = finalName;
-          saveUserSession(data.user, data.token, data.refreshToken);
-          sendUserDataToGoogleSheet({ name: finalName, email: "", phone: fullPhone, authMethod: "Mobile OTP" });
-          showToast("Phone verified! Welcome to ANIME.PLUS", "success");
-          return true;
-        }
-      } else {
-        const err = await safeJson(res);
-        if (err && err.message) {
-          showToast(err.message, "error");
-          return false;
-        }
-      }
-    } catch (err) {
-      console.log("Backend offline, verifying mobile simulation.");
-    }
+  if (!API_BASE) {
+    showToast("Secure sign-in is not configured for this site yet.", "error");
+    return false;
   }
 
-  // Local Simulation Verification
-  const stored = LOCAL_OTP_STORE.phone[fullPhone];
-  if (stored && stored.code === otp) {
-    const user = {
-      id: "usr_phone_" + phoneDigits,
-      name: finalName,
-      email: `user_${phoneDigits}@anime.plus`,
-      phone: fullPhone,
-      dob: "Not Specified",
-      avatar: POPULAR_AVATARS[Math.abs(hashCode(phoneDigits)) % POPULAR_AVATARS.length],
-      tier: "MEGA FAN VIP",
-      joinedDate: "2026",
-      authMethod: "mobile_otp"
-    };
-    saveUserSession(user, "simulated_jwt_mobile_" + phoneDigits, "simulated_refresh_token");
-    sendUserDataToGoogleSheet({ name: user.name, email: "", phone: user.phone, authMethod: "Mobile OTP" });
-    showToast("Mobile OTP verified! Logged into your account.", "success");
+  try {
+    const res = await fetch(`${API_BASE}/auth/verify-otp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone: fullPhone, otp, type: "mobile", name: finalName })
+    });
+    const data = await safeJson(res);
+    if (!res.ok || !data?.user || !data.token) throw new Error(data?.message || "The code could not be verified.");
+    saveUserSession(data.user, data.token, data.refreshToken);
+    showToast("Phone verified! Welcome to ANIME.PLUS", "success");
     return true;
-  } else {
-    showToast("Invalid or expired OTP code.", "error");
+  } catch (error) {
+    showToast(error.message || "Could not reach the sign-in service. Please try again.", "error");
     return false;
   }
 }
@@ -392,320 +238,154 @@ async function loginWithPassword(emailOrPhone, password) {
     showToast("Please enter email/phone and password", "error");
     return false;
   }
-
-  if (API_BASE) {
-    try {
-      const res = await fetch(`${API_BASE}/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: emailOrPhone, password })
-      });
-
-      if (res.ok) {
-        const data = await safeJson(res);
-        if (data) {
-          saveUserSession(data.user, data.token, data.refreshToken);
-          sendUserDataToGoogleSheet({ name: data.user.name, email: data.user.email, phone: data.user.phone || "", password: password, authMethod: "Password Login" });
-          showToast("Welcome back to ANIME.PLUS!", "success");
-          return true;
-        }
-      } else {
-        const err = await safeJson(res);
-        if (err && err.message) {
-          showToast(err.message, "error");
-          return false;
-        }
-      }
-    } catch (e) {
-      console.log("Backend offline, checking registered accounts simulation.");
-    }
+  if (!API_BASE) {
+    showToast("Secure sign-in is not configured for this site yet.", "error");
+    return false;
   }
 
-  // Fallback check against locally registered accounts
-  const targetStr = emailOrPhone.trim().toLowerCase();
-  const registeredAccounts = JSON.parse(localStorage.getItem("animeplus_registered_accounts") || "[]");
-  const matched = registeredAccounts.find(acc => 
-    (acc.email && acc.email.toLowerCase() === targetStr) || 
-    (acc.phone && acc.phone.includes(targetStr))
-  );
-
-  if (matched) {
-    if (matched.password !== password) {
-      showToast("Incorrect password. Please try again or reset password.", "error");
-      return false;
-    }
-    const user = {
-      id: matched.id || ("usr_" + Date.now()),
-      name: matched.name,
-      email: matched.email,
-      phone: matched.phone || "",
-      dob: matched.dob || "Not Specified",
-      avatar: POPULAR_AVATARS[0],
-      tier: "MEGA FAN VIP",
-      joinedDate: "2026",
-      authMethod: "password"
-    };
-    saveUserSession(user, "simulated_jwt_token_" + Date.now(), "simulated_refresh_token");
-    sendUserDataToGoogleSheet({ name: user.name, email: user.email, phone: user.phone, password: password, authMethod: "Password Login" });
-    showToast(`Welcome back ${user.name}!`, "success");
+  try {
+    const res = await fetch(`${API_BASE}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: emailOrPhone, password })
+    });
+    const data = await safeJson(res);
+    if (!res.ok || !data?.user || !data.token) throw new Error(data?.message || "Could not sign in.");
+    saveUserSession(data.user, data.token, data.refreshToken);
+    showToast("Welcome back to ANIME.PLUS!", "success");
     return true;
+  } catch (error) {
+    showToast(error.message || "Could not reach the sign-in service. Please try again.", "error");
+    return false;
   }
-
-  // Fallback distinct demo account login
-  const isEmail = targetStr.includes("@");
-  const user = {
-    id: "usr_pass_" + (isEmail ? targetStr.replace(/[^a-zA-Z0-9]/g, "") : targetStr.replace(/\D/g, "")),
-    name: isEmail ? targetStr.split("@")[0] : `User_${targetStr.slice(-4)}`,
-    email: isEmail ? targetStr : `user_${targetStr.replace(/\D/g, "")}@anime.plus`,
-    phone: !isEmail ? targetStr : "",
-    dob: "Not Specified",
-    avatar: POPULAR_AVATARS[0],
-    tier: "MEGA FAN VIP",
-    joinedDate: "2026",
-    authMethod: "password"
-  };
-  saveUserSession(user, "simulated_jwt_token_" + Date.now(), "simulated_refresh_token");
-  sendUserDataToGoogleSheet({ name: user.name, email: user.email, phone: user.phone, password: password, authMethod: "Password Login" });
-  showToast("Logged in successfully!", "success");
-  return true;
 }
 
-// 6. Google Social Sign-In
-async function loginWithGoogle() {
-  showToast("Connecting to Google Account...", "info");
-  
-  const googleProfiles = [
-    { name: "Alex Mercer", email: "alex.mercer@gmail.com", dob: "1998-05-14", avatar: POPULAR_AVATARS[0] },
-    { name: "Elena Rostova", email: "elena.rostova@gmail.com", dob: "2001-11-20", avatar: POPULAR_AVATARS[2] },
-    { name: "Saitama Hero", email: "saitama.onepunch@gmail.com", dob: "1995-09-08", avatar: POPULAR_AVATARS[3] }
-  ];
-  
-  const selected = googleProfiles[Math.floor(Math.random() * googleProfiles.length)];
-  
-  const user = {
-    id: "usr_google_" + selected.email.replace(/[^a-zA-Z0-9]/g, ""),
-    name: selected.name,
-    email: selected.email,
-    phone: "",
-    dob: selected.dob,
-    avatar: selected.avatar,
-    tier: "MEGA FAN VIP",
-    joinedDate: "2026",
-    authMethod: "google"
-  };
-  
-  saveUserSession(user, "google_jwt_token_" + Date.now(), "google_refresh_token");
-  sendUserDataToGoogleSheet({ name: user.name, email: user.email, phone: "", authMethod: "Google OAuth" });
-  showToast(`Welcome ${selected.name}! Signed in via Google.`, "success");
-  setTimeout(() => window.location.href = "index.html", 800);
+function loginWithGoogle() {
+  showToast("Google sign-in is not connected yet. Use email or phone verification.", "info");
 }
 
-// 7. Register New User (With Date of Birth & Google Sheet Sync)
 async function registerUser(name, dob, email, phone, password, confirmPassword) {
   if (!name || !email || !password) {
     showToast("Please fill in all required fields", "error");
     return false;
   }
   if (password.length < 6) {
-    showToast("Password must be at least 6 characters", "error");
+    showToast("Please enter a password with at least 6 characters", "error");
     return false;
   }
   if (password !== confirmPassword) {
     showToast("Passwords do not match", "error");
     return false;
   }
-
-  // 1. Send Complete Registration details (Name, Email, Phone, Password) to Google Sheet
-  sendUserDataToGoogleSheet({
-    name: name.trim(),
-    email: email.toLowerCase().trim(),
-    phone: phone ? phone.trim() : "",
-    password: password,
-    authMethod: "Account Registration"
-  });
-
-  // 2. Persist account locally for instant login verification
-  try {
-    let registeredAccounts = JSON.parse(localStorage.getItem("animeplus_registered_accounts") || "[]");
-    const newAcc = {
-      id: "usr_" + Date.now(),
-      name: name.trim(),
-      email: email.toLowerCase().trim(),
-      phone: phone ? phone.trim() : "",
-      dob: dob || "Not Specified",
-      password: password,
-      registeredAt: new Date().toLocaleString()
-    };
-    registeredAccounts.push(newAcc);
-    localStorage.setItem("animeplus_registered_accounts", JSON.stringify(registeredAccounts));
-  } catch (e) {}
-
-  if (API_BASE) {
-    try {
-      const res = await fetch(`${API_BASE}/auth/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, dob, email, phone, password, confirmPassword })
-      });
-
-      if (res.ok) {
-        const data = await safeJson(res);
-        if (data && data.user) {
-          saveUserSession(data.user, data.token, data.refreshToken);
-          showToast(`Account created for ${name}! Password set successfully.`, "success");
-          return true;
-        }
-      } else {
-        const err = await safeJson(res);
-        if (err && err.message) {
-          showToast(err.message, "info");
-        }
-      }
-    } catch (e) {
-      console.log("Backend offline, registering in local simulation.");
-    }
+  if (!API_BASE) {
+    showToast("Secure sign-in is not configured for this site yet.", "error");
+    return false;
   }
 
-  // Fallback local registration session
-  const user = {
-    id: "usr_" + Date.now(),
-    name: name.trim(),
-    dob: dob ? dob : "Not Specified",
-    email: email.toLowerCase().trim(),
-    phone: phone ? phone.trim() : "",
-    avatar: POPULAR_AVATARS[0],
-    tier: "MEGA FAN VIP",
-    joinedDate: "2026",
-    authMethod: "password"
-  };
-  saveUserSession(user, "simulated_jwt_token_" + Date.now(), "simulated_refresh_token");
-  showToast(`Account created for ${name}! Logged into your account.`, "success");
-  return true;
+  try {
+    const res = await fetch(`${API_BASE}/auth/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, dob, email, phone, password, confirmPassword })
+    });
+    const data = await safeJson(res);
+    if (!res.ok || !data?.user || !data.token) throw new Error(data?.message || "Could not create your account.");
+    saveUserSession(data.user, data.token, data.refreshToken);
+    showToast(`Account created for ${name}!`, "success");
+    return true;
+  } catch (error) {
+    showToast(error.message || "Could not reach the sign-in service. Please try again.", "error");
+    return false;
+  }
 }
 
-/* ==========================================================================
+/* ========================================================================
    PASSWORD MANAGEMENT (CHANGE, SET, FORGOT)
-   ========================================================================== */
-
+   ======================================================================== */
 // 7. Change Existing Password
 async function changePassword(oldPassword, newPassword, confirmPassword) {
-  if (!oldPassword || !newPassword || !confirmPassword) {
-    showToast("Please fill in all password fields", "error");
+  if (!oldPassword || !newPassword || !confirmPassword || newPassword.length < 6 || newPassword !== confirmPassword) {
+    showToast("Check the password fields and make sure the new passwords match.", "error");
     return false;
   }
-  if (newPassword.length < 6) {
-    showToast("New password must be at least 6 characters", "error");
-    return false;
-  }
-  if (newPassword !== confirmPassword) {
-    showToast("New passwords do not match", "error");
-    return false;
-  }
-
   const token = getAuthToken();
-  if (token && API_BASE) {
-    try {
-      const res = await fetch(`${API_BASE}/auth/change-password`, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ oldPassword, newPassword, confirmPassword })
-      });
-
-      if (res.ok) {
-        showToast("Password updated successfully!", "success");
-        return true;
-      } else {
-        const err = await safeJson(res);
-        if (err && err.message) {
-          showToast(err.message, "error");
-          return false;
-        }
-      }
-    } catch (e) {
-      console.log("Backend offline, updating password locally.");
-    }
+  if (!token || !API_BASE) {
+    showToast("Sign in again to change your password.", "error");
+    return false;
   }
-
-  // Local fallback
-  showToast("Password changed successfully!", "success");
-  return true;
+  try {
+    const res = await fetch(`${API_BASE}/auth/change-password`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ oldPassword, newPassword, confirmPassword })
+    });
+    const data = await safeJson(res);
+    if (!res.ok) throw new Error(data?.message || "Could not change your password.");
+    showToast("Password updated successfully!", "success");
+    return true;
+  } catch (error) {
+    showToast(error.message || "Could not reach the sign-in service.", "error");
+    return false;
+  }
 }
 
 // 8. Set Password for OTP-registered user
 async function setPassword(newPassword, confirmPassword) {
-  if (!newPassword || !confirmPassword) {
-    showToast("Please provide new password and confirmation", "error");
+  if (!newPassword || newPassword.length < 6 || newPassword !== confirmPassword) {
+    showToast("Check the password fields and make sure the new passwords match.", "error");
     return false;
   }
-  if (newPassword.length < 6) {
-    showToast("Password must be at least 6 characters", "error");
-    return false;
-  }
-  if (newPassword !== confirmPassword) {
-    showToast("Passwords do not match", "error");
-    return false;
-  }
-
   const token = getAuthToken();
-  if (token && API_BASE) {
-    try {
-      const res = await fetch(`${API_BASE}/auth/set-password`, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ newPassword, confirmPassword })
-      });
-
-      if (res.ok) {
-        showToast("Password has been set successfully!", "success");
-        return true;
-      }
-    } catch (e) {
-      console.log("Backend offline, setting password locally.");
-    }
+  if (!token || !API_BASE) {
+    showToast("Sign in again to set a password.", "error");
+    return false;
   }
-
-  showToast("Password set successfully!", "success");
-  return true;
+  try {
+    const res = await fetch(`${API_BASE}/auth/set-password`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ newPassword, confirmPassword })
+    });
+    const data = await safeJson(res);
+    if (!res.ok) throw new Error(data?.message || "Could not set your password.");
+    showToast("Password has been set successfully!", "success");
+    return true;
+  } catch (error) {
+    showToast(error.message || "Could not reach the sign-in service.", "error");
+    return false;
+  }
 }
 
 // 9. Reset Password with OTP (Forgot Password Flow)
 async function resetPasswordWithOtp(target, otp, newPassword, confirmPassword) {
-  if (!target || !otp || !newPassword) {
-    showToast("Please provide all required fields", "error");
+  if (!target || !otp || !newPassword || newPassword !== confirmPassword) {
+    showToast("Check the code and make sure the new passwords match.", "error");
     return false;
   }
-  if (newPassword !== confirmPassword) {
-    showToast("Passwords do not match", "error");
+  if (!API_BASE) {
+    showToast("Secure sign-in is not configured for this site yet.", "error");
     return false;
   }
-
-  if (API_BASE) {
-    try {
-      const res = await fetch(`${API_BASE}/auth/reset-password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ target, otp, newPassword, confirmPassword })
-      });
-
-      if (res.ok) {
-        showToast("Password reset successfully! Please log in.", "success");
-        return true;
-      }
-    } catch (e) {
-      console.log("Backend offline, simulating password reset.");
-    }
+  const normalizedTarget = target.includes("@") ? target.trim().toLowerCase() : target.replace(/[\s()-]/g, "");
+  try {
+    const res = await fetch(`${API_BASE}/auth/reset-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ target: normalizedTarget, otp, newPassword, confirmPassword })
+    });
+    const data = await safeJson(res);
+    if (!res.ok) throw new Error(data?.message || "Could not reset the password.");
+    showToast("Password reset successfully! Please log in.", "success");
+    return true;
+  } catch (error) {
+    showToast(error.message || "Could not reach the sign-in service.", "error");
+    return false;
   }
-
-  showToast("Password has been reset successfully! You can now log in.", "success");
-  return true;
 }
 
+/* ========================================================================
+   UI INTERACTION & TAB CONTROLLERS
+   ======================================================================== */
 /* ==========================================================================
    UI INTERACTION & TAB CONTROLLERS
    ========================================================================== */
@@ -1025,7 +705,7 @@ function initLoginForm() {
     resendMobileOtpBtn.addEventListener("click", async () => {
       const phone = phoneInput.value.trim();
       const countryCode = countrySelect ? countrySelect.value : "+91";
-      const ok = await sendMobileOtp(phone, countryCode);
+      const ok = await sendMobileOtp(phone, countryCode, selectedChannel);
       if (ok) {
         clearOtpInputs("mobileOtpDigits");
         startCountdownTimer("mobileOtpTimer", "resendMobileOtpBtn", 60);
@@ -1118,6 +798,7 @@ function initForgotPasswordPage() {
   const resetTargetInput = document.getElementById("resetTargetInput");
   const resetOtpStep = document.getElementById("resetOtpStep");
   const newPasswordStep = document.getElementById("newPasswordStep");
+  const resendResetOtpBtn = document.getElementById("resendResetOtpBtn");
   const submitNewPasswordBtn = document.getElementById("submitNewPasswordBtn");
 
   if (sendResetOtpBtn && resetTargetInput) {
@@ -1131,13 +812,26 @@ function initForgotPasswordPage() {
 
       sendResetOtpBtn.disabled = true;
       sendResetOtpBtn.textContent = "SENDING...";
-      const ok = target.includes("@") ? await sendEmailOtp(target) : await sendMobileOtp(target);
+      const ok = target.includes("@") ? await sendEmailOtp(target, "password_reset") : await sendMobileOtp(target, "", "sms", "password_reset");
       sendResetOtpBtn.disabled = false;
       sendResetOtpBtn.textContent = "SEND RESET CODE";
 
       if (ok) {
         if (resetOtpStep) resetOtpStep.classList.remove("hidden");
         if (newPasswordStep) newPasswordStep.classList.remove("hidden");
+        clearOtpInputs("resetOtpDigits");
+        startCountdownTimer("resetOtpTimer", "resendResetOtpBtn", 60);
+      }
+    });
+  }
+
+  if (resendResetOtpBtn && resetTargetInput) {
+    resendResetOtpBtn.addEventListener("click", async () => {
+      const target = resetTargetInput.value.trim();
+      const ok = target.includes("@")
+        ? await sendEmailOtp(target, "password_reset")
+        : await sendMobileOtp(target, "", "sms", "password_reset");
+      if (ok) {
         clearOtpInputs("resetOtpDigits");
         startCountdownTimer("resetOtpTimer", "resendResetOtpBtn", 60);
       }

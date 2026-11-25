@@ -31,10 +31,13 @@ const userSchema = new mongoose.Schema(
         },
 
         otp: {
-            code: String,
+            codeHash: String,
             expiresAt: Date,
             type: String,
-            target: String
+            target: String,
+            purpose: String,
+            channel: String,
+            attempts: { type: Number, default: 0 }
         },
 
         avatar: {
@@ -71,6 +74,11 @@ const userSchema = new mongoose.Schema(
         ],
 
         isEmailVerified: {
+            type: Boolean,
+            default: false
+        },
+
+        isPhoneVerified: {
             type: Boolean,
             default: false
         },

@@ -2,12 +2,50 @@ const express = require("express");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
 const bcryptjs = require("bcryptjs");
+const crypto = require("crypto");
+const mongoose = require("mongoose");
 const User = require("../user");
 const protect = require("../auth");
+const rateLimit = require("../config/rate-limit");
+const { requiredSecret } = require("../config/secrets");
+const { deliverOtp, isOtpDeliveryConfigured } = require("../otp-delivery");
 
-const JWT_SECRET = process.env.JWT_SECRET || "crunchy_secret_key_change_in_production";
+const JWT_SECRET = requiredSecret("JWT_SECRET");
+const OTP_SECRET = requiredSecret("OTP_SECRET");
 const JWT_EXPIRE = "7d";
 const REFRESH_TOKEN_EXPIRE = "30d";
+const sendOtpLimit = rateLimit({ limit: 5, windowMs: 10 * 60 * 1000 });
+const sendOtpTargetLimit = rateLimit({
+    limit: 3,
+    windowMs: 10 * 60 * 1000,
+    key: (req) => `${req.ip}:${String(req.body?.email || req.body?.phone || "").toLowerCase().replace(/\s/g, "").slice(0, 320)}`
+});
+const verifyOtpLimit = rateLimit({ limit: 10, windowMs: 10 * 60 * 1000 });
+const loginLimit = rateLimit({ limit: 10, windowMs: 10 * 60 * 1000 });
+const registerLimit = rateLimit({ limit: 5, windowMs: 60 * 60 * 1000 });
+
+function requireDatabase(req, res, next) {
+    if (mongoose.connection.readyState !== 1) {
+        return res.status(503).json({ success: false, message: "Sign-in is temporarily unavailable. Please try again shortly." });
+    }
+    next();
+}
+
+router.use(requireDatabase);
+
+function hashOtp(code) {
+    return crypto.createHmac("sha256", OTP_SECRET).update(code).digest("hex");
+}
+
+function validOtpHash(code, expectedHash) {
+    const actual = Buffer.from(hashOtp(code), "hex");
+    const expected = Buffer.from(expectedHash || "", "hex");
+    return actual.length === expected.length && crypto.timingSafeEqual(actual, expected);
+}
+
+function normalizePhone(value) {
+    return String(value || "").replace(/[\s()-]/g, "");
+}
 
 // Helper: Generate JWT Token
 const generateToken = (userId) => {
@@ -20,53 +58,64 @@ const generateRefreshToken = (userId) => {
 };
 
 // ============ SEND OTP (EMAIL & MOBILE) ============
-router.post("/send-otp", async (req, res) => {
+router.post("/send-otp", sendOtpLimit, sendOtpTargetLimit, requireDatabase, async (req, res) => {
     try {
-        const { email, phone, type } = req.body;
-        const target = type === "mobile" ? phone : email;
-
-        if (!target) {
-            return res.status(400).json({
-                success: false,
-                message: `Please provide a valid ${type === "mobile" ? "mobile number" : "email address"}`
-            });
+        const { email, phone, type, channel = "sms", purpose = "login" } = req.body || {};
+        if (!["email", "mobile"].includes(type) || !["login", "password_reset"].includes(purpose)) {
+            return res.status(400).json({ success: false, message: "Invalid verification request" });
+        }
+        if (channel !== "sms") {
+            return res.status(400).json({ success: false, message: "Invalid delivery option" });
         }
 
-        // Generate 6-digit OTP
-        const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-        const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
-
-        let user = null;
-        if (type === "mobile") {
-            user = await User.findOne({ phone: target });
-        } else {
-            user = await User.findOne({ email: target.toLowerCase() });
+        const target = type === "mobile" ? normalizePhone(phone) : String(email || "").trim().toLowerCase();
+        const validTarget = type === "mobile" ? /^\+[1-9]\d{7,14}$/.test(target) : /^\S+@\S+\.\S+$/.test(target);
+        if (!validTarget) {
+            return res.status(400).json({ success: false, message: type === "mobile" ? "Enter a valid phone number with country code" : "Enter a valid email address" });
+        }
+        if (!isOtpDeliveryConfigured({ type, channel })) {
+            return res.status(503).json({ success: false, message: "Code delivery is unavailable right now. Please try again later." });
         }
 
+        let user = type === "mobile" ? await User.findOne({ phone: target }) : await User.findOne({ email: target });
+        if (!user && purpose === "password_reset") {
+            return res.json({ success: true, message: "If the account exists, a verification code has been sent." });
+        }
+
+        let isNewUser = false;
         if (!user) {
-            // Create pending user record for OTP verification
+            isNewUser = true;
+            const suffix = crypto.randomBytes(12).toString("hex");
             user = new User({
-                name: type === "mobile" ? `User_${target.slice(-4)}` : target.split("@")[0],
-                email: type === "mobile" ? `user_${Date.now()}@anime.plus` : target.toLowerCase(),
-                phone: type === "mobile" ? target : undefined,
-                tier: "MEGA FAN VIP"
+                name: type === "mobile" ? `Anime fan ${target.slice(-4)}` : target.split("@")[0].slice(0, 40),
+                email: type === "email" ? target : `phone-${suffix}@accounts.anime-plus.invalid`,
+                phone: type === "mobile" ? target : undefined
             });
         }
 
+        const otpCode = crypto.randomInt(100000, 1000000).toString();
         user.otp = {
-            code: otpCode,
-            expiresAt: expiresAt,
-            type: type || "email",
-            target: target
+            codeHash: hashOtp(otpCode),
+            expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+            type,
+            target,
+            purpose,
+            channel: type === "email" ? "email" : channel,
+            attempts: 0
         };
-
         await user.save();
 
-        res.json({
-            success: true,
-            message: `OTP sent successfully to ${target}`,
-            simulatedOtp: otpCode // Included for easy testing in development!
-        });
+        try {
+            await deliverOtp({ target, code: otpCode, type, channel });
+        } catch (deliveryError) {
+            user.otp = undefined;
+            if (isNewUser) await user.deleteOne();
+            else await user.save();
+            console.error("OTP delivery failed:", deliveryError.message);
+            return res.status(503).json({ success: false, message: "Code delivery is unavailable right now. Please try again later." });
+        }
+
+        return res.json({ success: true, message: "If the account exists, a verification code has been sent." });
     } catch (error) {
         console.error("Send OTP error:", error);
         res.status(500).json({
@@ -77,12 +126,12 @@ router.post("/send-otp", async (req, res) => {
 });
 
 // ============ VERIFY OTP & LOGIN ============
-router.post("/verify-otp", async (req, res) => {
+router.post("/verify-otp", verifyOtpLimit, requireDatabase, async (req, res) => {
     try {
         const { email, phone, otp, type } = req.body;
-        const target = type === "mobile" ? phone : email;
+        const target = type === "mobile" ? normalizePhone(phone) : String(email || "").trim().toLowerCase();
 
-        if (!target || !otp) {
+        if (!target || !/^\d{6}$/.test(String(otp || "")) || !["email", "mobile"].includes(type)) {
             return res.status(400).json({
                 success: false,
                 message: "Please provide target and 6-digit OTP code"
@@ -96,18 +145,27 @@ router.post("/verify-otp", async (req, res) => {
             user = await User.findOne({ email: target.toLowerCase() });
         }
 
-        if (!user || !user.otp || !user.otp.code) {
+        if (!user || !user.otp || !user.otp.codeHash || user.otp.purpose !== "login" || user.otp.target !== target || user.otp.type !== type) {
             return res.status(400).json({
                 success: false,
                 message: "No OTP requested for this account. Please request a new code."
             });
         }
 
-        if (user.otp.code !== otp || new Date() > user.otp.expiresAt) {
+        if (new Date() > user.otp.expiresAt || user.otp.attempts >= 5) {
+            user.otp = undefined;
+            await user.save();
             return res.status(400).json({
                 success: false,
                 message: "Invalid or expired OTP code"
             });
+        }
+
+        if (!validOtpHash(String(otp), user.otp.codeHash)) {
+            user.otp.attempts += 1;
+            if (user.otp.attempts >= 5) user.otp = undefined;
+            await user.save();
+            return res.status(400).json({ success: false, message: "Invalid or expired OTP code" });
         }
 
         // Update name if provided
@@ -117,7 +175,8 @@ router.post("/verify-otp", async (req, res) => {
 
         // Clear OTP after successful verification
         user.otp = undefined;
-        user.isEmailVerified = true;
+        if (type === "email") user.isEmailVerified = true;
+        if (type === "mobile") user.isPhoneVerified = true;
         user.lastLogin = new Date();
 
         // Generate tokens
@@ -191,11 +250,11 @@ router.post("/set-password", protect, async (req, res) => {
 });
 
 // ============ RESET PASSWORD WITH OTP ============
-router.post("/reset-password", async (req, res) => {
+router.post("/reset-password", verifyOtpLimit, requireDatabase, async (req, res) => {
     try {
         const { target, otp, newPassword, confirmPassword } = req.body;
 
-        if (!target || !otp || !newPassword) {
+        if (!target || !otp || !newPassword || newPassword.length < 6) {
             return res.status(400).json({
                 success: false,
                 message: "Please provide all required fields"
@@ -209,15 +268,24 @@ router.post("/reset-password", async (req, res) => {
             });
         }
 
-        let user = await User.findOne({
-            $or: [{ email: target.toLowerCase() }, { phone: target }]
-        });
+        const normalizedTarget = target.includes("@") ? target.trim().toLowerCase() : normalizePhone(target);
+        const type = normalizedTarget.includes("@") ? "email" : "mobile";
+        const user = type === "email"
+            ? await User.findOne({ email: normalizedTarget })
+            : await User.findOne({ phone: normalizedTarget });
 
-        if (!user || !user.otp || user.otp.code !== otp || new Date() > user.otp.expiresAt) {
+        if (!user || !user.otp || user.otp.purpose !== "password_reset" || user.otp.type !== type || user.otp.target !== normalizedTarget || new Date() > user.otp.expiresAt || user.otp.attempts >= 5) {
             return res.status(400).json({
                 success: false,
                 message: "Invalid or expired OTP code"
             });
+        }
+
+        if (!/^\d{6}$/.test(String(otp)) || !validOtpHash(String(otp), user.otp.codeHash)) {
+            user.otp.attempts += 1;
+            if (user.otp.attempts >= 5) user.otp = undefined;
+            await user.save();
+            return res.status(400).json({ success: false, message: "Invalid or expired OTP code" });
         }
 
         user.password = newPassword;
@@ -234,7 +302,7 @@ router.post("/reset-password", async (req, res) => {
 });
 
 // ============ REGISTER ============
-router.post("/register", async (req, res) => {
+router.post("/register", registerLimit, async (req, res) => {
     try {
         const { name, email, password, confirmPassword } = req.body;
 
@@ -314,7 +382,7 @@ router.post("/register", async (req, res) => {
 });
 
 // ============ LOGIN ============
-router.post("/login", async (req, res) => {
+router.post("/login", loginLimit, async (req, res) => {
     try {
         const identifier = (req.body.email || req.body.phone || req.body.identifier || "").trim().toLowerCase();
         const password = req.body.password;
@@ -596,19 +664,6 @@ router.post("/logout", protect, async (req, res) => {
             success: false,
             message: error.message || "Error logging out"
         });
-    }
-});
-
-// ============ LOG USER DETAILS TO SPREADSHEET ============
-const { logUserToSpreadsheet } = require("../sheet-logger");
-
-router.post("/log-user", (req, res) => {
-    try {
-        const { name, email, phone, password, authMethod } = req.body;
-        logUserToSpreadsheet({ name, email, phone, password, authMethod });
-        res.json({ success: true, message: "User details logged to spreadsheet!" });
-    } catch (err) {
-        res.status(500).json({ success: false, message: err.message });
     }
 });
 
